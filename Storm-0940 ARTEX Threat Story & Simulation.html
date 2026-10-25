@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storm-0940: ARTEX Agentic AI Supply Chain Attack Analysis</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            bg: '#0a0d14',
+                            card: '#111622',
+                            border: '#1f293d',
+                            accent: '#00f0ff',
+                            danger: '#ff0055',
+                            warning: '#ffb700',
+                            success: '#00ff88',
+                            purple: '#a855f7'
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['JetBrains Mono', 'Consolas', 'monospace'],
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+        
+        body {
+            background-color: #0a0d14;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .glow-red { box-shadow: 0 0 15px rgba(255, 0, 85, 0.4); }
+        .glow-cyan { box-shadow: 0 0 15px rgba(0, 240, 255, 0.3); }
+        .glow-purple { box-shadow: 0 0 15px rgba(168, 85, 247, 0.35); }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0d14; }
+        ::-webkit-scrollbar-thumb { background: #1f293d; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00f0ff; }
+
+        .terminal-grid {
+            background-size: 30px 30px;
+            background-image: 
+                linear-gradient(to right, rgba(31, 41, 61, 0.3) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(31, 41, 61, 0.3) 1px, transparent 1px);
+        }
+
+        .scanline {
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0, 240, 255, 0.05) 50%,
+                rgba(0, 240, 255, 0.05)
+            );
+            background-size: 100% 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-cyan-500 selection:text-black">
+
+    <!-- Top Navigation Header -->
+    <header class="border-b border-cyber-border bg-cyber-card/80 backdrop-blur sticky top-0 z-50 px-4 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center space-x-3">
+            <div class="p-2 bg-red-500/10 border border-red-500/30 rounded-lg text-red-500">
+                <i data-lucide="shield-alert" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-lg font-bold tracking-wide text-white uppercase font-mono">STORM-0940 // ARTEX CAMPAIGN</h1>
+                    <span class="px-2 py-0.5 text-xs font-mono font-semibold bg-red-950 text-red-400 border border-red-800 rounded">CRITICAL INCIDENT</span>
+                </div>
+                <p class="text-xs text-slate-400">Microsoft Security Threat Intelligence Analysis • ConnectWise Supply Chain Compromise</p>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="flex items-center gap-1 bg-cyber-bg p-1 rounded-lg border border-cyber-border text-sm font-medium">
+            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="px-3.5 py-1.5 rounded-md text-cyan-400 bg-cyber-border/60 transition flex items-center gap-2">
+                <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Executive Summary
+            </button>
+            <button onclick="switchTab('simulation')" id="tab-simulation" class="px-3.5 py-1.5 rounded-md text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
+                <i data-lucide="activity" class="w-4 h-4"></i> Attack Simulation
+            </button>
+            <button onclick="switchTab('storyboard')" id="tab-storyboard" class="px-3.5 py-1.5 rounded-md text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
+                <i data-lucide="git-commit" class="w-4 h-4"></i> Interactive Storyboard
+            </button>
+            <button onclick="switchTab('defender')" id="tab-defender" class="px-3.5 py-1.5 rounded-md text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
+                <i data-lucide="shield-check" class="w-4 h-4"></i> Defender Matrix & Hunting
+            </button>
+        </nav>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 p-4 lg:p-6 max-w-7xl w-full mx-auto space-y-6">
+
+        <!-- TAB 1: EXECUTIVE SUMMARY -->
+        <section id="view-dashboard" class="space-y-6">
+            <!-- Key Metric Highlights Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 relative overflow-hidden group hover:border-red-500/50 transition">
+                    <div class="absolute -right-2 -bottom-2 opacity-10 text-red-500 group-hover:scale-110 transition">
+                        <i data-lucide="zap" class="w-24 h-24"></i>
+                    </div>
+                    <p class="text-xs font-mono uppercase tracking-wider text-slate-400">Peak Attack Velocity</p>
+                    <h3 class="text-3xl font-extrabold text-red-500 font-mono mt-2">2,900 / min</h3>
+                    <p class="text-xs text-slate-400 mt-2">Automated sign-in rate during AI high-volume password spray phases</p>
+                </div>
+
+                <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 relative overflow-hidden group hover:border-yellow-500/50 transition">
+                    <div class="absolute -right-2 -bottom-2 opacity-10 text-yellow-500 group-hover:scale-110 transition">
+                        <i data-lucide="building-2" class="w-24 h-24"></i>
+                    </div>
+                    <p class="text-xs font-mono uppercase tracking-wider text-slate-400">Targeted M365 Tenants</p>
+                    <h3 class="text-3xl font-extrabold text-yellow-500 font-mono mt-2">2,250+</h3>
+                    <p class="text-xs text-slate-400 mt-2">Organizations targeted across Defense, Aerospace, Energy & Tech</p>
+                </div>
+
+                <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 relative overflow-hidden group hover:border-cyan-500/50 transition">
+                    <div class="absolute -right-2 -bottom-2 opacity-10 text-cyan-500 group-hover:scale-110 transition">
+                        <i data-lucide="clock" class="w-24 h-24"></i>
+                    </div>
+                    <p class="text-xs font-mono uppercase tracking-wider text-slate-400">Time to Global Admin</p>
+                    <h3 class="text-3xl font-extrabold text-cyan-400 font-mono mt-2">&lt; 3 Hours</h3>
+                    <p class="text-xs text-slate-400 mt-2">Autonomous compromise to full privileged role elevation</p>
+                </div>
+
+                <div class="bg-cyber-card border border-cyber-border rounded-xl p-5 relative overflow-hidden group hover:border-purple-500/50 transition">
+                    <div class="absolute -right-2 -bottom-2 opacity-10 text-purple-500 group-hover:scale-110 transition">
+                        <i data-lucide="bot" class="w-24 h-24"></i>
+                    </div>
+                    <p class="text-xs font-mono uppercase tracking-wider text-slate-400">Engine / AI Framework</p>
+                    <h3 class="text-2xl font-bold text-purple-400 font-mono mt-2">ARTEX Mesh</h3>
+                    <p class="text-xs text-slate-400 mt-2">Agentic autonomous multi-agent operational framework</p>
+                </div>
+            </div>
+
+            <!-- Campaign Overview & Architectural Flow Overview -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Textual Overview -->
+                <div class="lg:col-span-2 bg-cyber-card border border-cyber-border rounded-xl p-6 space-y-4">
+                    <div class="flex items-center justify-between border-b border-cyber-border pb-3">
+                        <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                            <i data-lucide="file-text" class="w-5 h-5 text-cyan-400"></i> Executive Threat Summary
+                        </h2>
+                        <span class="text-xs font-mono px-2 py-1 bg-cyber-bg border border-cyber-border rounded text-slate-300">Origin: State-Sponsored (Storm-0940)</span>
+                    </div>
+                    <p class="text-sm text-slate-300 leading-relaxed">
+                        In October 2026, Microsoft Threat Intelligence disclosed a sophisticated campaign attributed to state-sponsored threat actor <strong class="text-white">Storm-0940</strong>. The adversary compromised the supply chain of <strong class="text-white">ConnectWise Cloud Backup SaaS</strong> infrastructure to harvest elevated OAuth application credentials and secrets.
+                    </p>
+                    <p class="text-sm text-slate-300 leading-relaxed">
+                        Armed with stolen OAuth secrets, Storm-0940 deployed <strong class="text-purple-400">ARTEX</strong>, an advanced agentic AI framework capable of operating autonomous agent meshes. ARTEX used direct Microsoft Graph API calls to execute non-interactive sign-ins, effectively bypassing traditional Multi-Factor Authentication (MFA), rapidly enumerating target environments, escalating privileges, and establishing persistent backdoors across thousands of Microsoft 365 enterprise tenants within hours.
+                    </p>
+
+                    <div class="bg-cyber-bg border border-red-500/30 rounded-lg p-4 mt-4">
+                        <h4 class="text-xs font-mono uppercase font-bold text-red-400 flex items-center gap-2 mb-2">
+                            <i data-lucide="alert-triangle" class="w-4 h-4"></i> Critical Operational Finding
+                        </h4>
+                        <p class="text-xs text-slate-300 leading-normal">
+                            Traditional conditional access and interactive MFA enforcement were bypassed because the stolen OAuth credentials allowed direct service principal authentication via Microsoft Graph API endpoints. High-volume password spraying (over 151,000 requests) was coordinated concurrently by ARTEX agents to discover additional initial access vectors.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Attack Vector Breakdown -->
+                <div class="bg-cyber-card border border-cyber-border rounded-xl p-6 space-y-4">
+                    <h2 class="text-lg font-semibold text-white border-b border-cyber-border pb-3 flex items-center gap-2">
+                        <i data-lucide="target" class="w-5 h-5 text-red-400"></i> Primary Targets
+                    </h2>
+                    <ul class="space-y-3">
+                        <li class="flex items-start gap-3 text-xs text-slate-300 bg-cyber-bg p-2.5 rounded-lg border border-cyber-border">
+                            <i data-lucide="shield" class="w-4 h-4 text-cyan-400 mt-0.5 flex-shrink-0"></i>
+                            <div>
+                                <strong class="text-white block">Defense & Aerospace</strong>
+                                Government defense contractors and military supply chain vendors.
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3 text-xs text-slate-300 bg-cyber-bg p-2.5 rounded-lg border border-cyber-border">
+                            <i data-lucide="zap" class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
+                            <div>
+                                <strong class="text-white block">Critical Energy Infrastructure</strong>
+                                Power grid operators, nuclear tech, and smart-grid SaaS vendors.
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3 text-xs text-slate-300 bg-cyber-bg p-2.5 rounded-lg border border-cyber-border">
+                            <i data-lucide="cpu" class="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0"></i>
+                            <div>
+                                <strong class="text-white block">IT & Cloud Managed Services</strong>
+                                MSPs with delegated administrative privileges into client tenants.
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3 text-xs text-slate-300 bg-cyber-bg p-2.5 rounded-lg border border-cyber-border">
+                            <i data-lucide="landmark" class="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0"></i>
+                            <div>
+                                <strong class="text-white block">Financial Institutions</strong>
+                                High-value enterprise banking & cloud payment clearing houses.
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: INTERACTIVE REAL-TIME ANIMATED SIMULATION -->
+        <section id="view-simulation" class="hidden space-y-4">
+            <!-- Canvas Simulation Header & Control Panel -->
+            <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center space-x-3">
+                    <button id="btn-play-sim" onclick="toggleSimPlay()" class="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-lg transition flex items-center gap-2 text-sm">
+                        <i data-lucide="play" id="icon-sim-play" class="w-4 h-4"></i> <span id="label-sim-play">Play Simulation</span>
+                    </button>
+                    <button onclick="resetSim()" class="px-3 py-2 bg-cyber-bg hover:bg-cyber-border border border-cyber-border text-slate-300 rounded-lg text-sm transition flex items-center gap-2">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Reset
+                    </button>
+                </div>
+
+                <!-- Speed Control -->
+                <div class="flex items-center space-x-2 bg-cyber-bg p-1.5 rounded-lg border border-cyber-border">
+                    <span class="text-xs text-slate-400 px-2 font-mono">SIM SPEED:</span>
+                    <button onclick="setSimSpeed(1)" id="speed-1x" class="px-2.5 py-1 text-xs font-mono rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/40">1x (Human)</button>
+                    <button onclick="setSimSpeed(3)" id="speed-3x" class="px-2.5 py-1 text-xs font-mono rounded text-slate-400 hover:text-white">3x</button>
+                    <button onclick="setSimSpeed(8)" id="speed-8x" class="px-2.5 py-1 text-xs font-mono rounded text-slate-400 hover:text-white">8x (Machine AI)</button>
+                </div>
+
+                <!-- Current Stage Display -->
+                <div class="text-right">
+                    <span class="text-xs text-slate-400 uppercase font-mono block">Active Attack Phase</span>
+                    <span id="sim-phase-title" class="text-sm font-bold text-red-400 font-mono">Phase 1: Initial Recon & High-Volume Spray</span>
+                </div>
+            </div>
+
+            <!-- Canvas & Live Log Stream Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <!-- Visual Canvas (2 cols) -->
+                <div class="lg:col-span-2 bg-cyber-card border border-cyber-border rounded-xl p-2 relative flex flex-col justify-between min-h-[460px] overflow-hidden">
+                    <canvas id="attackCanvas" class="w-full h-full rounded-lg bg-cyber-bg cursor-pointer"></canvas>
+                    <div class="absolute bottom-4 left-4 bg-cyber-card/90 border border-cyber-border p-2.5 rounded-lg text-xs font-mono text-slate-300 backdrop-blur space-y-1">
+                        <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span> Storm-0940 C2 Node</div>
+                        <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-purple-500 inline-block"></span> ARTEX AI Mesh Nodes</div>
+                        <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-yellow-500 inline-block"></span> ConnectWise Supply Chain SaaS</div>
+                        <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-cyan-400 inline-block"></span> Target M365 Enterprise Tenants</div>
+                    </div>
+                </div>
+
+                <!-- Terminal Log Feed Console -->
+                <div class="bg-cyber-card border border-cyber-border rounded-xl p-4 flex flex-col h-[460px]">
+                    <div class="flex items-center justify-between border-b border-cyber-border pb-2 mb-2">
+                        <div class="flex items-center gap-2 text-xs font-mono text-slate-300">
+                            <i data-lucide="terminal" class="w-4 h-4 text-cyan-400"></i>
+                            <span>ENTRA ID & GRAPH API TELEMETRY</span>
+                        </div>
+                        <span class="flex h-2 w-2 relative">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                    </div>
+                    <!-- Terminal Body -->
+                    <div id="sim-terminal" class="flex-1 overflow-y-auto font-mono text-[11px] space-y-2 p-2 bg-cyber-bg rounded-lg border border-cyber-border/60 text-slate-300 scanline">
+                        <div class="text-slate-500">// Terminal initialized. Awaiting simulation trigger...</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: INTERACTIVE STORYBOARD -->
+        <section id="view-storyboard" class="hidden space-y-6">
+            <!-- Stage Selector Tabs -->
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                <button onclick="selectStage(1)" id="btn-stage-1" class="p-3 border rounded-xl text-left font-mono text-xs transition border-cyan-500 bg-cyan-500/10 text-cyan-400">
+                    <span class="block text-[10px] text-slate-400 uppercase">Stage 01</span>
+                    <span class="font-bold block mt-1">AI Password Spraying</span>
+                </button>
+                <button onclick="selectStage(2)" id="btn-stage-2" class="p-3 border rounded-xl text-left font-mono text-xs transition border-cyber-border bg-cyber-card text-slate-400 hover:text-white">
+                    <span class="block text-[10px] text-slate-400 uppercase">Stage 02</span>
+                    <span class="font-bold block mt-1">ConnectWise SaaS Breach</span>
+                </button>
+                <button onclick="selectStage(3)" id="btn-stage-3" class="p-3 border rounded-xl text-left font-mono text-xs transition border-cyber-border bg-cyber-card text-slate-400 hover:text-white">
+                    <span class="block text-[10px] text-slate-400 uppercase">Stage 03</span>
+                    <span class="font-bold block mt-1">Graph API Identity Abuse</span>
+                </button>
+                <button onclick="selectStage(4)" id="btn-stage-4" class="p-3 border rounded-xl text-left font-mono text-xs transition border-cyber-border bg-cyber-card text-slate-400 hover:text-white">
+                    <span class="block text-[10px] text-slate-400 uppercase">Stage 04</span>
+                    <span class="font-bold block mt-1">Privilege Escalation</span>
+                </button>
+                <button onclick="selectStage(5)" id="btn-stage-5" class="p-3 border rounded-xl text-left font-mono text-xs transition border-cyber-border bg-cyber-card text-slate-400 hover:text-white">
+                    <span class="block text-[10px] text-slate-400 uppercase">Stage 05</span>
+                    <span class="font-bold block mt-1">Autonomous Exfiltration</span>
+                </button>
+            </div>
+
+            <!-- Detailed Stage Information Box -->
+            <div id="stage-detail-card" class="bg-cyber-card border border-cyber-border rounded-xl p-6 space-y-6">
+                <!-- Content dynamically populated via JS -->
+            </div>
+        </section>
+
+        <!-- TAB 4: DEFENDER MATRIX & HUNTING CHECKLIST -->
+        <section id="view-defender" class="hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Entra ID KQL Hunting Queries -->
+                <div class="bg-cyber-card border border-cyber-border rounded-xl p-6 space-y-4">
+                    <div class="flex items-center justify-between border-b border-cyber-border pb-3">
+                        <h3 class="text-base font-bold text-white flex items-center gap-2">
+                            <i data-lucide="code" class="w-5 h-5 text-cyan-400"></i> KQL Hunting Queries (Entra ID)
+                        </h3>
+                        <span class="text-xs font-mono text-slate-400">Microsoft Sentinel / Advanced Hunting</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex items-center justify-between text-xs font-mono text-slate-300 mb-1">
+                                <span>1. Hunt Non-Interactive Sign-Ins by ServicePrincipal ID</span>
+                                <button onclick="copyToClipboard('kql-1')" class="text-cyan-400 hover:underline text-[11px]">Copy Query</button>
+                            </div>
+                            <pre id="kql-1" class="bg-cyber-bg p-3 rounded-lg border border-cyber-border font-mono text-xs text-green-400 overflow-x-auto">
+AADNonInteractiveUserSignInLogs
+| where AppId == "00000003-0000-0000-c000-000000000000" // MS Graph API
+| where ServicePrincipalId in ("327685a1-7992-4f18-a6b1-connectwise-id")
+| summarize FailureCount = countif(ResultType != 0), SuccessCount = countif(ResultType == 0) by IPAddress, ServicePrincipalName, bin(TimeGenerated, 15m)
+| where SuccessCount > 0 and FailureCount > 100
+                            </pre>
+                        </div>
+
+                        <div>
+                            <div class="flex items-center justify-between text-xs font-mono text-slate-300 mb-1">
+                                <span>2. Detect Rogue App Secret & Credential Additions</span>
+                                <button onclick="copyToClipboard('kql-2')" class="text-cyan-400 hover:underline text-[11px]">Copy Query</button>
+                            </div>
+                            <pre id="kql-2" class="bg-cyber-bg p-3 rounded-lg border border-cyber-border font-mono text-xs text-cyan-300 overflow-x-auto">
+AuditLogs
+| where OperationName in ("Update application – Certificates and secrets management", "Add service principal credentials")
+| extend InitiatedByApp = tostring(InitiatedBy.app.displayName)
+| extend TargetAppId = tostring(TargetResources[0].id)
+| project TimeGenerated, OperationName, InitiatedByApp, TargetAppId, Result
+| order by TimeGenerated desc
+                            </pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Remediation & Incident Response Checklist -->
+                <div class="bg-cyber-card border border-cyber-border rounded-xl p-6 space-y-4">
+                    <div class="flex items-center justify-between border-b border-cyber-border pb-3">
+                        <h3 class="text-base font-bold text-white flex items-center gap-2">
+                            <i data-lucide="check-square" class="w-5 h-5 text-emerald-400"></i> Incident Response Guidance
+                        </h3>
+                        <span class="text-xs font-mono text-emerald-400">Actionable Remediation</span>
+                    </div>
+
+                    <div class="space-y-3 font-sans text-xs">
+                        <label class="flex items-start gap-3 p-3 bg-cyber-bg border border-cyber-border rounded-lg cursor-pointer hover:border-emerald-500/50 transition">
+                            <input type="checkbox" class="mt-1 rounded bg-cyber-card border-cyber-border text-emerald-500 focus:ring-0">
+                            <div>
+                                <strong class="text-white block font-mono">1. Disable Affected Service Principals Immediately</strong>
+                                <p class="text-slate-400 mt-0.5">Do not merely reset secret keys. Disable the entire enterprise application / ServicePrincipal in Entra ID to prevent ongoing token validation.</p>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start gap-3 p-3 bg-cyber-bg border border-cyber-border rounded-lg cursor-pointer hover:border-emerald-500/50 transition">
+                            <input type="checkbox" class="mt-1 rounded bg-cyber-card border-cyber-border text-emerald-500 focus:ring-0">
+                            <div>
+                                <strong class="text-white block font-mono">2. Audit Search by ServicePrincipal Object ID</strong>
+                                <p class="text-slate-400 mt-0.5">Threat actors rename application display names to disguise malicious principals. Always correlate logs by ServicePrincipal Object ID.</p>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start gap-3 p-3 bg-cyber-bg border border-cyber-border rounded-lg cursor-pointer hover:border-emerald-500/50 transition">
+                            <input type="checkbox" class="mt-1 rounded bg-cyber-card border-cyber-border text-emerald-500 focus:ring-0">
+                            <div>
+                                <strong class="text-white block font-mono">3. Revoke Global Admin & Directory Role Assignments</strong>
+                                <p class="text-slate-400 mt-0.5">Audit recent Directory Role assignment logs (`Add member to role`) for newly elevated application principals or user accounts within the attack window.</p>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start gap-3 p-3 bg-cyber-bg border border-cyber-border rounded-lg cursor-pointer hover:border-emerald-500/50 transition">
+                            <input type="checkbox" class="mt-1 rounded bg-cyber-card border-cyber-border text-emerald-500 focus:ring-0">
+                            <div>
+                                <strong class="text-white block font-mono">4. Purge Unrecognized OAuth App Credentials</strong>
+                                <p class="text-slate-400 mt-0.5">Examine all active app registrations for newly appended secondary secrets or certificates generated during the compromise timeframe.</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-cyber-border py-4 px-6 text-center text-xs text-slate-500 font-mono">
+        Microsoft Threat Intelligence Technical Analysis • Storm-0940 / ARTEX Campaign • Educational Threat Visualization
+    </footer>
+
+    <!-- Logic & Simulation JavaScript -->
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Global Navigation
+        function switchTab(tabId) {
+            ['dashboard', 'simulation', 'storyboard', 'defender'].forEach(id => {
+                const view = document.getElementById(`view-${id}`);
+                const tab = document.getElementById(`tab-${id}`);
+                if (id === tabId) {
+                    view.classList.remove('hidden');
+                    tab.classList.add('text-cyan-400', 'bg-cyber-border/60');
+                    tab.classList.remove('text-slate-400');
+                } else {
+                    view.classList.add('hidden');
+                    tab.classList.remove('text-cyan-400', 'bg-cyber-border/60');
+                    tab.classList.add('text-slate-400');
+                }
+            });
+
+            if (tabId === 'simulation') {
+                initCanvas();
+            }
+        }
+
+        // ==========================================
+        // STORYBOARD DATA & LOGIC
+        // ==========================================
+        const stageData = {
+            1: {
+                title: "Stage 1: Initial Reconnaissance & AI Password Spraying",
+                actor: "Storm-0940 / ARTEX Agent Mesh",
+                duration: "T+00:00 to T+00:45",
+                tactics: "TA0043 - Reconnaissance / TA0006 - Credential Access",
+                description: "ARTEX AI agents orchestrated a high-density, automated password spray campaign across enterprise endpoints. Generating over 151,000 login failures against 327+ high-value accounts, the AI framework dynamically adjusted request velocity up to 2,900 attempts per minute to bypass standard threshold lockouts.",
+                iocs: ["IP Range: 185.220.101.x (Tor Exit Nodes)", "151,000+ Failed Auth Events", "Target User Accounts: 327+"],
+                details: "The password spraying served dual purposes: testing weak password permutations and distracting SOC monitoring while parallel API-level secret probing occurred."
+            },
+            2: {
+                title: "Stage 2: ConnectWise Cloud Backup SaaS Compromise",
+                actor: "Storm-0940 Supply Chain Module",
+                duration: "T+00:45 to T+01:15",
+                tactics: "TA0001 - Initial Access (Supply Chain)",
+                description: "Threat actors leveraged compromised vendor access to penetrate ConnectWise Cloud Backup SaaS infrastructure. They harvested valid multi-tenant OAuth app IDs, client secrets, and certificate pairs embedded within the backup platform's cloud synchronization services.",
+                iocs: ["Compromised App: ConnectWise Backup Connector", "Secrets Extracted: 4,000+ OAuth Tokens", "Direct Tenant Exposure: 2,250+"],
+                details: "Because backup applications require high-privilege read/write permissions for disaster recovery, these stolen credentials provided direct administrative gateways into customer M365 environments."
+            },
+            3: {
+                title: "Stage 3: Automated OAuth Identity Abuse via Graph API",
+                actor: "ARTEX Graph API Executor Agent",
+                duration: "T+01:15 to T+01:50",
+                tactics: "TA0005 - Defense Evasion / Non-Interactive Authentication",
+                description: "ARTEX utilized the stolen client secrets to initiate direct non-interactive OAuth 2.0 client credential flows (`/oauth2/v2.0/token`) against Microsoft Graph API. Because non-interactive service principal authentications do not trigger interactive MFA challenges, the threat actor bypassed conditional access policies entirely.",
+                iocs: ["Endpoint: graph.microsoft.com", "Auth Flow: client_credentials", "MFA Bypass: True (Non-interactive)"],
+                details: "ARTEX parsed token responses instantaneously, creating multi-threaded session streams to query Entra ID directory schemas."
+            },
+            4: {
+                title: "Stage 4: Rapid Privilege Escalation & Rogue Persistence",
+                actor: "ARTEX Persistence & Role Escalation Agent",
+                duration: "T+01:50 to T+02:20",
+                tactics: "TA0004 - Privilege Escalation / TA0003 - Persistence",
+                description: "Operating at machine speed, ARTEX enumerated tenant directory roles, assigned the 'Global Administrator' or 'Privileged Role Administrator' roles to compromised service principals, and registered secondary rogue client certificates/secrets across target app registrations.",
+                iocs: ["Audit Event: 'Add member to role'", "Target Role: Global Administrator", "App Modification: Added Rogue RSA Keypair"],
+                details: "Adding rogue application secrets ensures persistence even if ConnectWise or the customer rotates the primary compromised vendor client secret."
+            },
+            5: {
+                title: "Stage 5: Autonomous Multi-Tenant Exfiltration & Lateral Movement",
+                actor: "ARTEX Exfiltration Swarm Mesh",
+                duration: "T+02:20 to T+02:55 (&lt; 3 Hours Total)",
+                tactics: "TA0010 - Exfiltration / TA0008 - Lateral Movement",
+                description: "ARTEX deployed parallel exfiltration agents across all 2,250+ accessible M365 tenants. The mesh autonomously searched Exchange Online mailboxes, SharePoint documents, Teams attachments, and Key Vault secrets for keywords matching defense tech, intellectual property, and credentials.",
+                iocs: ["Mass Exchange API Calls", "SharePoint Graph Query: /sites/search", "Data Staged & Encrypted via C2 Swarm"],
+                details: "Full tenant compromise and sensitive data staging was completed in under 3 hours from initial token authorization."
+            }
+        };
+
+        function selectStage(stageNum) {
+            for (let i = 1; i <= 5; i++) {
+                const btn = document.getElementById(`btn-stage-${i}`);
+                if (i === stageNum) {
+                    btn.className = "p-3 border rounded-xl text-left font-mono text-xs transition border-cyan-500 bg-cyan-500/10 text-cyan-400";
+                } else {
+                    btn.className = "p-3 border rounded-xl text-left font-mono text-xs transition border-cyber-border bg-cyber-card text-slate-400 hover:text-white";
+                }
+            }
+
+            const data = stageData[stageNum];
+            const detailCard = document.getElementById('stage-detail-card');
+            detailCard.innerHTML = `
+                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-cyber-border pb-4">
+                    <div>
+                        <span class="text-xs font-mono text-cyan-400 font-bold uppercase tracking-wider">Attack Phase 0${stageNum} Breakdown</span>
+                        <h2 class="text-xl font-bold text-white mt-0.5">${data.title}</h2>
+                    </div>
+                    <span class="px-3 py-1 bg-red-500/10 border border-red-500/30 text-red-400 font-mono text-xs rounded-full">${data.duration}</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-cyber-bg p-4 rounded-lg border border-cyber-border space-y-2">
+                        <span class="text-xs font-mono text-slate-400 uppercase">Primary Threat Actor / Agent</span>
+                        <p class="text-sm font-semibold text-purple-400">${data.actor}</p>
+                    </div>
+                    <div class="bg-cyber-bg p-4 rounded-lg border border-cyber-border space-y-2">
+                        <span class="text-xs font-mono text-slate-400 uppercase">MITRE ATT&CK Mapping</span>
+                        <p class="text-sm font-semibold text-yellow-400 font-mono">${data.tactics}</p>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <h4 class="text-xs font-mono uppercase text-slate-400 font-bold">Operational Impact Summary</h4>
+                    <p class="text-sm text-slate-300 leading-relaxed">${data.description}</p>
+                </div>
+
+                <div class="space-y-2">
+                    <h4 class="text-xs font-mono uppercase text-slate-400 font-bold">Key Technical Indicators & Telemetry</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        ${data.iocs.map(ioc => `<div class="bg-cyber-bg p-2.5 rounded border border-cyber-border text-xs font-mono text-slate-300 flex items-center gap-2"><i data-lucide="terminal" class="w-3.5 h-3.5 text-cyan-400 flex-shrink-0"></i>${ioc}</div>`).join('')}
+                    </div>
+                </div>
+
+                <div class="bg-cyan-950/20 border border-cyan-500/30 p-4 rounded-lg text-xs text-cyan-200">
+                    <strong class="font-bold block text-cyan-400 mb-1 font-mono">// ARCHITECTURAL NOTE</strong>
+                    ${data.details}
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        // Initialize Stage 1 on load
+        selectStage(1);
+
+        // ==========================================
+        // CANVAS ANIMATED SIMULATION ENGINE
+        // ==========================================
+        let canvas, ctx;
+        let isSimRunning = false;
+        let simSpeed = 1;
+        let simStep = 0;
+        let packets = [];
+        let nodes = [];
+
+        function initCanvas() {
+            canvas = document.getElementById('attackCanvas');
+            if (!canvas) return;
+            
+            // Set canvas size dynamically
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = Math.max(container.clientHeight, 440);
+            ctx = canvas.getContext('2d');
+
+            setupNodes();
+            drawCanvas();
+        }
+
+        function setupNodes() {
+            const w = canvas.width;
+            const h = canvas.height;
+
+            nodes = [
+                // 0: Threat Actor
+                { id: 'actor', label: 'Storm-0940 C2', x: w * 0.12, y: h * 0.25, color: '#ff0055', radius: 22, type: 'actor' },
+                // 1: ARTEX AI Mesh
+                { id: 'artex', label: 'ARTEX AI Mesh', x: w * 0.35, y: h * 0.25, color: '#a855f7', radius: 26, type: 'ai' },
+                // 2: ConnectWise SaaS
+                { id: 'connectwise', label: 'ConnectWise SaaS', x: w * 0.35, y: h * 0.70, color: '#ffb700', radius: 24, type: 'vendor' },
+                // Target M365 Tenants
+                { id: 'tenant1', label: 'Defense M365', x: w * 0.78, y: h * 0.18, color: '#00f0ff', radius: 20, type: 'target' },
+                { id: 'tenant2', label: 'Aerospace M365', x: w * 0.82, y: h * 0.40, color: '#00f0ff', radius: 20, type: 'target' },
+                { id: 'tenant3', label: 'Energy Grid M365', x: w * 0.80, y: h * 0.62, color: '#00f0ff', radius: 20, type: 'target' },
+                { id: 'tenant4', label: 'Tech / MSP M365', x: w * 0.75, y: h * 0.84, color: '#00f0ff', radius: 20, type: 'target' }
+            ];
+        }
+
+        function toggleSimPlay() {
+            isSimRunning = !isSimRunning;
+            const btnLabel = document.getElementById('label-sim-play');
+            const btnIcon = document.getElementById('icon-sim-play');
+
+            if (isSimRunning) {
+                btnLabel.innerText = "Pause Simulation";
+                btnIcon.setAttribute('data-lucide', 'pause');
+                animateSim();
+            } else {
+                btnLabel.innerText = "Play Simulation";
+                btnIcon.setAttribute('data-lucide', 'play');
+            }
+            lucide.createIcons();
+        }
+
+        function setSimSpeed(speed) {
+            simSpeed = speed;
+            ['1x', '3x', '8x'].forEach(s => {
+                const btn = document.getElementById(`speed-${s}`);
+                if (s === `${speed}x`) {
+                    btn.className = "px-2.5 py-1 text-xs font-mono rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/40";
+                } else {
+                    btn.className = "px-2.5 py-1 text-xs font-mono rounded text-slate-400 hover:text-white";
+                }
+            });
+        }
+
+        function resetSim() {
+            isSimRunning = false;
+            simStep = 0;
+            packets = [];
+            document.getElementById('label-sim-play').innerText = "Play Simulation";
+            document.getElementById('icon-sim-play').setAttribute('data-lucide', 'play');
+            document.getElementById('sim-terminal').innerHTML = '<div class="text-slate-500">// Terminal reset. Awaiting start...</div>';
+            document.getElementById('sim-phase-title').innerText = "Phase 1: Initial Recon & High-Volume Spray";
+            lucide.createIcons();
+            if (ctx) drawCanvas();
+        }
+
+        function spawnPacket(fromIdx, toIdx, color, speed = 0.01) {
+            packets.push({
+                from: nodes[fromIdx],
+                to: nodes[toIdx],
+                progress: 0,
+                speed: speed * simSpeed,
+                color: color
+            });
+        }
+
+        const logMessages = [
+            { step: 10, phase: "Phase 1: Initial Recon & High-Volume Spray", msg: "<span class='text-red-400'>[STORM-0940]</span> Initiating password spray mesh via Tor nodes...", type: "warn" },
+            { step: 30, phase: "Phase 1: Initial Recon & High-Volume Spray", msg: "<span class='text-yellow-400'>[ENTRA ID]</span> 2,900/min failed auth spike detected across 327 accounts.", type: "alert" },
+            { step: 70, phase: "Phase 2: ConnectWise SaaS Secret Compromise", msg: "<span class='text-purple-400'>[ARTEX]</span> Compromised ConnectWise Cloud Backup SaaS vendor key material.", type: "crit" },
+            { step: 110, phase: "Phase 3: Graph API Non-Interactive MFA Bypass", msg: "<span class='text-cyan-400'>[GRAPH API]</span> Non-interactive client_credentials token issued for ServicePrincipal.", type: "info" },
+            { step: 150, phase: "Phase 4: Rapid Privilege Escalation", msg: "<span class='text-red-500'>[ALERT]</span> ServicePrincipal assigned 'Global Administrator' in Tenant Defense M365.", type: "crit" },
+            { step: 180, phase: "Phase 4: Rapid Privilege Escalation", msg: "<span class='text-purple-400'>[ARTEX]</span> Appended rogue client secret certificate [RSA 2048] for persistent backdoor.", type: "warn" },
+            { step: 220, phase: "Phase 5: Autonomous Multi-Tenant Exfiltration", msg: "<span class='text-emerald-400'>[EXFIL]</span> ARTEX Mesh querying /sites/search and Exchange Mailboxes concurrently...", type: "exfil" },
+            { step: 280, phase: "Phase 5: Autonomous Multi-Tenant Exfiltration", msg: "<span class='text-red-400'>[FULL COMPROMISE]</span> 2,250+ Tenants staged. Total elapsed time: 2h 47m.", type: "crit" }
+        ];
+
+        function logTerminal(msg) {
+            const term = document.getElementById('sim-terminal');
+            if (!term) return;
+            const entry = document.createElement('div');
+            entry.className = "py-0.5 border-b border-cyber-border/40 font-mono";
+            entry.innerHTML = `<span class="text-slate-500">[${new Date().toLocaleTimeString()}]</span> ${msg}`;
+            term.appendChild(entry);
+            term.scrollTop = term.scrollHeight;
+        }
+
+        function animateSim() {
+            if (!isSimRunning) return;
+
+            simStep += 1 * simSpeed;
+
+            // Trigger events based on simulation timeline steps
+            logMessages.forEach(item => {
+                if (Math.floor(simStep) === item.step) {
+                    logTerminal(item.msg);
+                    document.getElementById('sim-phase-title').innerText = item.phase;
+                }
+            });
+
+            // Periodically spawn visual packets between graph nodes
+            if (simStep < 60 && Math.random() < 0.3) {
+                spawnPacket(0, 1, '#ff0055', 0.02); // Storm -> ARTEX
+                spawnPacket(1, 3, '#a855f7', 0.025); // ARTEX -> Targets
+            } else if (simStep >= 60 && simStep < 120 && Math.random() < 0.4) {
+                spawnPacket(1, 2, '#ffb700', 0.03); // ARTEX -> ConnectWise
+                spawnPacket(2, 3, '#ffb700', 0.02);
+                spawnPacket(2, 4, '#ffb700', 0.02);
+            } else if (simStep >= 120 && Math.random() < 0.5) {
+                const targetIdx = 3 + Math.floor(Math.random() * 4);
+                spawnPacket(1, targetIdx, '#00f0ff', 0.03);
+            }
+
+            drawCanvas();
+
+            if (simStep > 320) {
+                simStep = 0; // Loop simulation
+                logTerminal("<span class='text-cyan-400'>// Simulation sequence loop restarting...</span>");
+            }
+
+            requestAnimationFrame(animateSim);
+        }
+
+        function drawCanvas() {
+            if (!ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Draw Connection Lines
+            const connections = [
+                [0, 1], [1, 2], [1, 3], [1, 4], [1, 5], [1, 6], [2, 3], [2, 4], [2, 5], [2, 6]
+            ];
+
+            connections.forEach(([i, j]) => {
+                const n1 = nodes[i];
+                const n2 = nodes[j];
+                ctx.beginPath();
+                ctx.moveTo(n1.x, n1.y);
+                ctx.lineTo(n2.x, n2.y);
+                ctx.strokeStyle = 'rgba(31, 41, 61, 0.6)';
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([4, 4]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            });
+
+            // 2. Update & Draw Packets
+            for (let i = packets.length - 1; i >= 0; i--) {
+                const p = packets[i];
+                p.progress += p.speed;
+                if (p.progress >= 1) {
+                    packets.splice(i, 1);
+                    continue;
+                }
+
+                const px = p.from.x + (p.to.x - p.from.x) * p.progress;
+                const py = p.from.y + (p.to.y - p.from.y) * p.progress;
+
+                ctx.beginPath();
+                ctx.arc(px, py, 4, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.shadowColor = p.color;
+                ctx.shadowBlur = 8;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+
+            // 3. Draw Nodes
+            nodes.forEach(node => {
+                // Pulse effect
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, node.radius + Math.sin(Date.now() / 300) * 2, 0, Math.PI * 2);
+                ctx.fillStyle = node.color + '20';
+                ctx.fill();
+
+                // Core Node
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#111622';
+                ctx.strokeStyle = node.color;
+                ctx.lineWidth = 2.5;
+                ctx.shadowColor = node.color;
+                ctx.shadowBlur = 10;
+                ctx.fill();
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                // Node Labels
+                ctx.fillStyle = '#e2e8f0';
+                ctx.font = '11px "JetBrains Mono", monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(node.label, node.x, node.y + node.radius + 16);
+            });
+        }
+
+        // Copy Utility
+        function copyToClipboard(elementId) {
+            const text = document.getElementById(elementId).innerText;
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            alert('Query copied to clipboard!');
+        }
+
+        // Window Resize Listener
+        window.addEventListener('resize', () => {
+            if (document.getElementById('view-simulation').classList.contains('hidden') === false) {
+                initCanvas();
+            }
+        });
+    </script>
+</body>
+</html>
