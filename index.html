@@ -171,7 +171,7 @@
                             <i data-lucide="alert-triangle" class="w-4 h-4"></i> Critical Operational Finding
                         </h4>
                         <p class="text-xs text-slate-300 leading-normal">
-                            Traditional conditional access and interactive MFA enforcement were bypassed because the stolen OAuth credentials allowed direct service principal authentication via Microsoft Graph API endpoints. High-volume password spraying (over 151,000 requests) was coordinated concurrently by ARTEX agents to discover additional initial access vectors.
+                            Traditional conditional access and interactive MFA enforcement were bypassed because the stolen OAuth credentials allowed direct service principal authentication via Microsoft Graph API endpoints. High-volume password spraying (over 151,000 requests) was coordinated concurrently by ARTEX agents originating from infrastructure including <strong class="text-white">144.172.64.99</strong> to discover additional initial access vectors.
                         </p>
                     </div>
                 </div>
@@ -246,8 +246,8 @@
             <!-- Canvas & Live Log Stream Layout -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <!-- Visual Canvas (2 cols) -->
-                <div class="lg:col-span-2 bg-cyber-card border border-cyber-border rounded-xl p-2 relative flex flex-col justify-between min-h-[460px] overflow-hidden">
-                    <canvas id="attackCanvas" class="w-full h-full rounded-lg bg-cyber-bg cursor-pointer"></canvas>
+                <div class="lg:col-span-2 bg-cyber-card border border-cyber-border rounded-xl p-2 relative flex flex-col justify-between min-h-[460px] overflow-hidden" id="canvas-container">
+                    <canvas id="attackCanvas" class="w-full h-full rounded-lg bg-cyber-bg cursor-pointer block"></canvas>
                     <div class="absolute bottom-4 left-4 bg-cyber-card/90 border border-cyber-border p-2.5 rounded-lg text-xs font-mono text-slate-300 backdrop-blur space-y-1">
                         <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span> Storm-0940 C2 Node</div>
                         <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-purple-500 inline-block"></span> ARTEX AI Mesh Nodes</div>
@@ -323,31 +323,70 @@
                     <div class="space-y-4">
                         <div>
                             <div class="flex items-center justify-between text-xs font-mono text-slate-300 mb-1">
-                                <span>1. Hunt Non-Interactive Sign-Ins by ServicePrincipal ID</span>
+                                <span>1. Hunt Workload Identity Sign-Ins via Static Multi-Tenant AppID</span>
                                 <button onclick="copyToClipboard('kql-1')" class="text-cyan-400 hover:underline text-[11px]">Copy Query</button>
                             </div>
                             <pre id="kql-1" class="bg-cyber-bg p-3 rounded-lg border border-cyber-border font-mono text-xs text-green-400 overflow-x-auto">
-AADNonInteractiveUserSignInLogs
-| where AppId == "00000003-0000-0000-c000-000000000000" // MS Graph API
-| where ServicePrincipalId in ("327685a1-7992-4f18-a6b1-connectwise-id")
-| summarize FailureCount = countif(ResultType != 0), SuccessCount = countif(ResultType == 0) by IPAddress, ServicePrincipalName, bin(TimeGenerated, 15m)
-| where SuccessCount > 0 and FailureCount > 100
+// Detect non-interactive sign-ins using compromised multi-tenant ConnectWise AppIDs
+let TargetAppIds = dynamic([
+    "327685a1-7992-4f18-a6b1-XXXXXXXXXXXX", // ConnectWise Primary Sync
+    "d8c56e3b-9a48-4c12-8b3a-XXXXXXXXXXXX", // ConnectWise API Connector
+    "9b5f3d1a-4c28-4e8b-8a1f-XXXXXXXXXXXX", // ConnectWise Cloud Backup
+    "1e7c9b2d-5a3f-48d9-9c4e-XXXXXXXXXXXX"  // ConnectWise Monitoring
+]);
+AADServicePrincipalSignInLogs
+| where AppId in (TargetAppIds)
+| where ResultType == 0 // Filter for successful authentications
+| project TimeGenerated, 
+          AppId, 
+          ServicePrincipalName, 
+          ServicePrincipalId, // Local tenant Object ID
+          IPAddress, 
+          ClientAppUsed, 
+          ResourceDisplayName
+| order by TimeGenerated desc
                             </pre>
                         </div>
 
                         <div>
                             <div class="flex items-center justify-between text-xs font-mono text-slate-300 mb-1">
-                                <span>2. Detect Rogue App Secret & Credential Additions</span>
+                                <span>2. Detect Unauthorized App Secret & Credential Additions</span>
                                 <button onclick="copyToClipboard('kql-2')" class="text-cyan-400 hover:underline text-[11px]">Copy Query</button>
                             </div>
                             <pre id="kql-2" class="bg-cyber-bg p-3 rounded-lg border border-cyber-border font-mono text-xs text-cyan-300 overflow-x-auto">
+// Detect secondary rogue secrets/certificates appended to Enterprise Apps
 AuditLogs
-| where OperationName in ("Update application – Certificates and secrets management", "Add service principal credentials")
-| extend InitiatedByApp = tostring(InitiatedBy.app.displayName)
-| extend TargetAppId = tostring(TargetResources[0].id)
-| project TimeGenerated, OperationName, InitiatedByApp, TargetAppId, Result
+| where OperationName in (
+    "Add service principal credentials", 
+    "Update application – Certificates and secrets management"
+)
+| extend TargetAppId = tostring(TargetResources[0].attributes.[0].value)
+| extend TargetDisplayName = tostring(TargetResources[0].displayName)
+| extend InitiatingEntity = iff(isnotempty(InitiatedBy.user.userPrincipalName), 
+                                InitiatedBy.user.userPrincipalName, 
+                                InitiatedBy.app.displayName)
+| project TimeGenerated, OperationName, InitiatingEntity, TargetDisplayName, TargetAppId, Result
 | order by TimeGenerated desc
                             </pre>
+                        </div>
+
+                        <!-- Architectural Callout Box -->
+                        <div class="bg-cyan-950/20 border border-cyan-500/30 p-3.5 rounded-lg text-xs text-cyan-200 space-y-1">
+                            <strong class="font-bold text-cyan-400 font-mono block">// TECHNICAL SCHEMA NOTE: AppId vs ServicePrincipalId</strong>
+                            <p class="text-[11px] text-slate-300 leading-relaxed">
+                                Always query multi-tenant application compromises using static multi-tenant <strong class="text-white">AppId</strong> strings rather than local <strong class="text-white">ServicePrincipalId</strong> Object IDs. While <code class="text-cyan-300">AppId</code> remains static across all tenants globally, <code class="text-cyan-300">ServicePrincipalId</code> represents the local instance assigned uniquely per customer tenant.
+                            </p>
+                        </div>
+
+                        <!-- OFFICIAL DEFENDER XDR ALERTS -->
+                        <div class="bg-red-950/20 border border-red-500/30 p-3.5 rounded-lg text-xs space-y-2">
+                            <strong class="font-bold text-red-400 font-mono block flex items-center gap-2">
+                                <i data-lucide="shield-alert" class="w-4 h-4"></i> OFFICIAL DEFENDER XDR ALERTS
+                            </strong>
+                            <ul class="list-disc pl-4 text-slate-300 space-y-1 font-mono text-[11px]">
+                                <li>Application self-assigned Global Administrator role</li>
+                                <li>Unusual Microsoft Graph activity associated with Compromised ConnectWise Application</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -365,16 +404,16 @@ AuditLogs
                         <label class="flex items-start gap-3 p-3 bg-cyber-bg border border-cyber-border rounded-lg cursor-pointer hover:border-emerald-500/50 transition">
                             <input type="checkbox" class="mt-1 rounded bg-cyber-card border-cyber-border text-emerald-500 focus:ring-0">
                             <div>
-                                <strong class="text-white block font-mono">1. Disable Affected Service Principals Immediately</strong>
-                                <p class="text-slate-400 mt-0.5">Do not merely reset secret keys. Disable the entire enterprise application / ServicePrincipal in Entra ID to prevent ongoing token validation.</p>
+                                <strong class="text-white block font-mono">1. Disable, Do Not Delete</strong>
+                                <p class="text-slate-400 mt-0.5">Do not delete enterprise applications as the first response to preserve critical audit logs and configuration evidence. Disable the application instead to halt ongoing token validation.</p>
                             </div>
                         </label>
 
                         <label class="flex items-start gap-3 p-3 bg-cyber-bg border border-cyber-border rounded-lg cursor-pointer hover:border-emerald-500/50 transition">
                             <input type="checkbox" class="mt-1 rounded bg-cyber-card border-cyber-border text-emerald-500 focus:ring-0">
                             <div>
-                                <strong class="text-white block font-mono">2. Audit Search by ServicePrincipal Object ID</strong>
-                                <p class="text-slate-400 mt-0.5">Threat actors rename application display names to disguise malicious principals. Always correlate logs by ServicePrincipal Object ID.</p>
+                                <strong class="text-white block font-mono">2. Inventory the Four ConnectWise App IDs</strong>
+                                <p class="text-slate-400 mt-0.5">Inventory the exact four global Application IDs identified by Microsoft in the advisory and map them to their corresponding local tenant ServicePrincipal Object IDs.</p>
                             </div>
                         </label>
 
@@ -391,6 +430,14 @@ AuditLogs
                             <div>
                                 <strong class="text-white block font-mono">4. Purge Unrecognized OAuth App Credentials</strong>
                                 <p class="text-slate-400 mt-0.5">Examine all active app registrations for newly appended secondary secrets or certificates generated during the compromise timeframe.</p>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start gap-3 p-3 bg-cyber-bg border border-cyber-border rounded-lg cursor-pointer hover:border-emerald-500/50 transition">
+                            <input type="checkbox" class="mt-1 rounded bg-cyber-card border-cyber-border text-emerald-500 focus:ring-0">
+                            <div>
+                                <strong class="text-white block font-mono">5. Vendor Restoration Hold</strong>
+                                <p class="text-slate-400 mt-0.5">Keep affected ConnectWise application connections disabled within the tenant until formal, secure restoration instructions are provided directly by ConnectWise.</p>
                             </div>
                         </label>
                     </div>
@@ -427,7 +474,8 @@ AuditLogs
             });
 
             if (tabId === 'simulation') {
-                initCanvas();
+                // Use a slight timeout to ensure container is fully visible before calc
+                setTimeout(initCanvas, 50);
             }
         }
 
@@ -440,8 +488,8 @@ AuditLogs
                 actor: "Storm-0940 / ARTEX Agent Mesh",
                 duration: "T+00:00 to T+00:45",
                 tactics: "TA0043 - Reconnaissance / TA0006 - Credential Access",
-                description: "ARTEX AI agents orchestrated a high-density, automated password spray campaign across enterprise endpoints. Generating over 151,000 login failures against 327+ high-value accounts, the AI framework dynamically adjusted request velocity up to 2,900 attempts per minute to bypass standard threshold lockouts.",
-                iocs: ["IP Range: 185.220.101.x (Tor Exit Nodes)", "151,000+ Failed Auth Events", "Target User Accounts: 327+"],
+                description: "ARTEX AI agents orchestrated a high-density, automated password spray campaign across enterprise endpoints. Generating over 151,000 login failures against 327+ high-value accounts, the AI framework dynamically adjusted request velocity up to 2,900 attempts per minute originating from dedicated infrastructure (e.g., 144.172.64.99) to bypass standard threshold lockouts.",
+                iocs: ["IP Source: 144.172.64.99 (Password Spray C2)", "151,000+ Failed Auth Events", "Target User Accounts: 327+"],
                 details: "The password spraying served dual purposes: testing weak password permutations and distracting SOC monitoring while parallel API-level secret probing occurred."
             },
             2: {
@@ -459,7 +507,7 @@ AuditLogs
                 duration: "T+01:15 to T+01:50",
                 tactics: "TA0005 - Defense Evasion / Non-Interactive Authentication",
                 description: "ARTEX utilized the stolen client secrets to initiate direct non-interactive OAuth 2.0 client credential flows (`/oauth2/v2.0/token`) against Microsoft Graph API. Because non-interactive service principal authentications do not trigger interactive MFA challenges, the threat actor bypassed conditional access policies entirely.",
-                iocs: ["Endpoint: graph.microsoft.com", "Auth Flow: client_credentials", "MFA Bypass: True (Non-interactive)"],
+                iocs: ["Endpoint: graph.microsoft.com", "Auth Flow: client_credentials", "Source IP: 144.172.64.60 (Token Requests)"],
                 details: "ARTEX parsed token responses instantaneously, creating multi-threaded session streams to query Entra ID directory schemas."
             },
             4: {
@@ -546,15 +594,19 @@ AuditLogs
         let simStep = 0;
         let packets = [];
         let nodes = [];
+        let animationFrameId;
 
         function initCanvas() {
             canvas = document.getElementById('attackCanvas');
             if (!canvas) return;
             
-            // Set canvas size dynamically
-            const container = canvas.parentElement;
-            canvas.width = container.clientWidth;
-            canvas.height = Math.max(container.clientHeight, 440);
+            const container = document.getElementById('canvas-container');
+            const rect = container.getBoundingClientRect();
+            
+            // Fix dimension setting to avoid continuous expansion on resize
+            canvas.width = rect.width - 16;
+            canvas.height = rect.height - 16;
+            
             ctx = canvas.getContext('2d');
 
             setupNodes();
@@ -567,16 +619,16 @@ AuditLogs
 
             nodes = [
                 // 0: Threat Actor
-                { id: 'actor', label: 'Storm-0940 C2', x: w * 0.12, y: h * 0.25, color: '#ff0055', radius: 22, type: 'actor' },
+                { id: 'actor', label: 'Storm-0940 C2', x: w * 0.12, y: h * 0.25, color: '#ff0055', radius: 20, type: 'actor' },
                 // 1: ARTEX AI Mesh
-                { id: 'artex', label: 'ARTEX AI Mesh', x: w * 0.35, y: h * 0.25, color: '#a855f7', radius: 26, type: 'ai' },
+                { id: 'artex', label: 'ARTEX AI Mesh', x: w * 0.35, y: h * 0.25, color: '#a855f7', radius: 24, type: 'ai' },
                 // 2: ConnectWise SaaS
-                { id: 'connectwise', label: 'ConnectWise SaaS', x: w * 0.35, y: h * 0.70, color: '#ffb700', radius: 24, type: 'vendor' },
+                { id: 'connectwise', label: 'ConnectWise SaaS', x: w * 0.35, y: h * 0.70, color: '#ffb700', radius: 22, type: 'vendor' },
                 // Target M365 Tenants
-                { id: 'tenant1', label: 'Defense M365', x: w * 0.78, y: h * 0.18, color: '#00f0ff', radius: 20, type: 'target' },
-                { id: 'tenant2', label: 'Aerospace M365', x: w * 0.82, y: h * 0.40, color: '#00f0ff', radius: 20, type: 'target' },
-                { id: 'tenant3', label: 'Energy Grid M365', x: w * 0.80, y: h * 0.62, color: '#00f0ff', radius: 20, type: 'target' },
-                { id: 'tenant4', label: 'Tech / MSP M365', x: w * 0.75, y: h * 0.84, color: '#00f0ff', radius: 20, type: 'target' }
+                { id: 'tenant1', label: 'Defense M365', x: w * 0.80, y: h * 0.18, color: '#00f0ff', radius: 18, type: 'target' },
+                { id: 'tenant2', label: 'Aerospace M365', x: w * 0.84, y: h * 0.40, color: '#00f0ff', radius: 18, type: 'target' },
+                { id: 'tenant3', label: 'Energy Grid M365', x: w * 0.82, y: h * 0.62, color: '#00f0ff', radius: 18, type: 'target' },
+                { id: 'tenant4', label: 'Tech / MSP M365', x: w * 0.76, y: h * 0.84, color: '#00f0ff', radius: 18, type: 'target' }
             ];
         }
 
@@ -592,6 +644,7 @@ AuditLogs
             } else {
                 btnLabel.innerText = "Play Simulation";
                 btnIcon.setAttribute('data-lucide', 'play');
+                if(animationFrameId) cancelAnimationFrame(animationFrameId);
             }
             lucide.createIcons();
         }
@@ -612,12 +665,18 @@ AuditLogs
             isSimRunning = false;
             simStep = 0;
             packets = [];
+            if(animationFrameId) cancelAnimationFrame(animationFrameId);
+            
             document.getElementById('label-sim-play').innerText = "Play Simulation";
             document.getElementById('icon-sim-play').setAttribute('data-lucide', 'play');
             document.getElementById('sim-terminal').innerHTML = '<div class="text-slate-500">// Terminal reset. Awaiting start...</div>';
             document.getElementById('sim-phase-title').innerText = "Phase 1: Initial Recon & High-Volume Spray";
             lucide.createIcons();
-            if (ctx) drawCanvas();
+            
+            if (ctx) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawCanvas();
+            }
         }
 
         function spawnPacket(fromIdx, toIdx, color, speed = 0.01) {
@@ -631,10 +690,10 @@ AuditLogs
         }
 
         const logMessages = [
-            { step: 10, phase: "Phase 1: Initial Recon & High-Volume Spray", msg: "<span class='text-red-400'>[STORM-0940]</span> Initiating password spray mesh via Tor nodes...", type: "warn" },
+            { step: 10, phase: "Phase 1: Initial Recon & High-Volume Spray", msg: "<span class='text-red-400'>[STORM-0940]</span> Initiating password spray mesh via C2 IP 144.172.64.99...", type: "warn" },
             { step: 30, phase: "Phase 1: Initial Recon & High-Volume Spray", msg: "<span class='text-yellow-400'>[ENTRA ID]</span> 2,900/min failed auth spike detected across 327 accounts.", type: "alert" },
             { step: 70, phase: "Phase 2: ConnectWise SaaS Secret Compromise", msg: "<span class='text-purple-400'>[ARTEX]</span> Compromised ConnectWise Cloud Backup SaaS vendor key material.", type: "crit" },
-            { step: 110, phase: "Phase 3: Graph API Non-Interactive MFA Bypass", msg: "<span class='text-cyan-400'>[GRAPH API]</span> Non-interactive client_credentials token issued for ServicePrincipal.", type: "info" },
+            { step: 110, phase: "Phase 3: Graph API Non-Interactive MFA Bypass", msg: "<span class='text-cyan-400'>[GRAPH API]</span> Token issued via 144.172.64.60 for ServicePrincipal (client_credentials).", type: "info" },
             { step: 150, phase: "Phase 4: Rapid Privilege Escalation", msg: "<span class='text-red-500'>[ALERT]</span> ServicePrincipal assigned 'Global Administrator' in Tenant Defense M365.", type: "crit" },
             { step: 180, phase: "Phase 4: Rapid Privilege Escalation", msg: "<span class='text-purple-400'>[ARTEX]</span> Appended rogue client secret certificate [RSA 2048] for persistent backdoor.", type: "warn" },
             { step: 220, phase: "Phase 5: Autonomous Multi-Tenant Exfiltration", msg: "<span class='text-emerald-400'>[EXFIL]</span> ARTEX Mesh querying /sites/search and Exchange Mailboxes concurrently...", type: "exfil" },
@@ -681,14 +740,15 @@ AuditLogs
 
             if (simStep > 320) {
                 simStep = 0; // Loop simulation
+                packets = []; // CLEAR PREVIOUS PACKETS TO PREVENT MEMORY AND VISUAL CLUTTER
                 logTerminal("<span class='text-cyan-400'>// Simulation sequence loop restarting...</span>");
             }
 
-            requestAnimationFrame(animateSim);
+            animationFrameId = requestAnimationFrame(animateSim);
         }
 
         function drawCanvas() {
-            if (!ctx) return;
+            if (!ctx || !canvas) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // 1. Draw Connection Lines
@@ -773,7 +833,9 @@ AuditLogs
         // Window Resize Listener
         window.addEventListener('resize', () => {
             if (document.getElementById('view-simulation').classList.contains('hidden') === false) {
-                initCanvas();
+                // Add debounce to resize to prevent rapid firing
+                clearTimeout(window.resizeTimer);
+                window.resizeTimer = setTimeout(initCanvas, 100);
             }
         });
     </script>
