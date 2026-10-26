@@ -88,7 +88,7 @@
             </div>
         </div>
 
-        <!-- Navigation Tabs -->
+        <!-- Navigation Tabs (4-Tab Structure) -->
         <nav class="flex items-center gap-1 bg-cyber-bg p-1 rounded-lg border border-cyber-border text-sm font-medium">
             <button onclick="switchTab('dashboard')" id="tab-dashboard" class="px-3.5 py-1.5 rounded-md text-cyan-400 bg-cyber-border/60 transition flex items-center gap-2">
                 <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Executive Summary
@@ -99,8 +99,8 @@
             <button onclick="switchTab('storyboard')" id="tab-storyboard" class="px-3.5 py-1.5 rounded-md text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
                 <i data-lucide="git-commit" class="w-4 h-4"></i> Interactive Storyboard
             </button>
-            <button onclick="switchTab('defender')" id="tab-defender" class="px-3.5 py-1.5 rounded-md text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
-                <i data-lucide="shield-check" class="w-4 h-4"></i> Defender Matrix & Hunting
+            <button onclick="switchTab('hunting')" id="tab-hunting" class="px-3.5 py-1.5 rounded-md text-slate-400 hover:text-slate-200 transition flex items-center gap-2">
+                <i data-lucide="shield-check" class="w-4 h-4"></i> Hunting & Guidance
             </button>
         </nav>
     </header>
@@ -246,8 +246,8 @@
             <!-- Canvas & Live Log Stream Layout -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <!-- Visual Canvas (2 cols) -->
-                <div class="lg:col-span-2 bg-cyber-card border border-cyber-border rounded-xl p-2 relative flex flex-col justify-between min-h-[460px] overflow-hidden" id="canvas-container">
-                    <canvas id="attackCanvas" class="w-full h-full rounded-lg bg-cyber-bg cursor-pointer block"></canvas>
+                <div class="lg:col-span-2 bg-cyber-card border border-cyber-border rounded-xl p-2 relative flex flex-col justify-between min-h-[460px] overflow-hidden">
+                    <canvas id="attackCanvas" class="w-full h-full rounded-lg bg-cyber-bg cursor-pointer"></canvas>
                     <div class="absolute bottom-4 left-4 bg-cyber-card/90 border border-cyber-border p-2.5 rounded-lg text-xs font-mono text-slate-300 backdrop-blur space-y-1">
                         <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span> Storm-0940 C2 Node</div>
                         <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-purple-500 inline-block"></span> ARTEX AI Mesh Nodes</div>
@@ -308,94 +308,67 @@
             </div>
         </section>
 
-        <!-- TAB 4: DEFENDER MATRIX & HUNTING CHECKLIST -->
-        <section id="view-defender" class="hidden space-y-6">
+        <!-- TAB 4: HUNTING GUIDANCE & INCIDENT RESPONSE -->
+        <section id="view-hunting" class="hidden space-y-6">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Entra ID KQL Hunting Queries -->
+                <!-- Comprehensive Official Microsoft Defender XDR Alerts -->
                 <div class="bg-cyber-card border border-cyber-border rounded-xl p-6 space-y-4">
                     <div class="flex items-center justify-between border-b border-cyber-border pb-3">
                         <h3 class="text-base font-bold text-white flex items-center gap-2">
-                            <i data-lucide="code" class="w-5 h-5 text-cyan-400"></i> KQL Hunting Queries (Entra ID)
+                            <i data-lucide="shield-alert" class="w-5 h-5 text-red-400"></i> Official Microsoft Defender XDR Alerts
                         </h3>
-                        <span class="text-xs font-mono text-slate-400">Microsoft Sentinel / Advanced Hunting</span>
+                        <span class="text-xs font-mono text-slate-400">Microsoft Security Intelligence</span>
                     </div>
 
-                    <div class="space-y-4">
-                        <div>
-                            <div class="flex items-center justify-between text-xs font-mono text-slate-300 mb-1">
-                                <span>1. Hunt Workload Identity Sign-Ins via Static Multi-Tenant AppID</span>
-                                <button onclick="copyToClipboard('kql-1')" class="text-cyan-400 hover:underline text-[11px]">Copy Query</button>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Monitor Microsoft Defender XDR and Microsoft Sentinel for the complete suite of alerts associated with Storm-0940 and ARTEX workload identity abuse:
+                    </p>
+
+                    <ul class="space-y-2.5">
+                        <li class="bg-cyber-bg p-2.5 rounded-lg border border-cyber-border flex items-start gap-2.5">
+                            <i data-lucide="alert-octagon" class="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0"></i>
+                            <div>
+                                <strong class="text-white block text-xs font-mono">Application self-assigned Global Administrator role</strong>
+                                <span class="text-[11px] text-slate-400">Triggered when an enterprise app or service principal modifies directory roles to assign privileged access.</span>
                             </div>
-                            <pre id="kql-1" class="bg-cyber-bg p-3 rounded-lg border border-cyber-border font-mono text-xs text-green-400 overflow-x-auto">
-// Detect non-interactive sign-ins using compromised multi-tenant ConnectWise AppIDs
-let TargetAppIds = dynamic([
-    "327685a1-7992-4f18-a6b1-XXXXXXXXXXXX", // ConnectWise Primary Sync
-    "d8c56e3b-9a48-4c12-8b3a-XXXXXXXXXXXX", // ConnectWise API Connector
-    "9b5f3d1a-4c28-4e8b-8a1f-XXXXXXXXXXXX", // ConnectWise Cloud Backup
-    "1e7c9b2d-5a3f-48d9-9c4e-XXXXXXXXXXXX"  // ConnectWise Monitoring
-]);
-AADServicePrincipalSignInLogs
-| where AppId in (TargetAppIds)
-| where ResultType == 0 // Filter for successful authentications
-| project TimeGenerated, 
-          AppId, 
-          ServicePrincipalName, 
-          ServicePrincipalId, // Local tenant Object ID
-          IPAddress, 
-          ClientAppUsed, 
-          ResourceDisplayName
-| order by TimeGenerated desc
-                            </pre>
-                        </div>
-
-                        <div>
-                            <div class="flex items-center justify-between text-xs font-mono text-slate-300 mb-1">
-                                <span>2. Detect Unauthorized App Secret & Credential Additions</span>
-                                <button onclick="copyToClipboard('kql-2')" class="text-cyan-400 hover:underline text-[11px]">Copy Query</button>
+                        </li>
+                        <li class="bg-cyber-bg p-2.5 rounded-lg border border-cyber-border flex items-start gap-2.5">
+                            <i data-lucide="alert-triangle" class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
+                            <div>
+                                <strong class="text-white block text-xs font-mono">Unusual Microsoft Graph activity associated with Compromised App</strong>
+                                <span class="text-[11px] text-slate-400">Detects anomalous high-volume non-interactive API calls originating from suspicious external IP infrastructure.</span>
                             </div>
-                            <pre id="kql-2" class="bg-cyber-bg p-3 rounded-lg border border-cyber-border font-mono text-xs text-cyan-300 overflow-x-auto">
-// Detect secondary rogue secrets/certificates appended to Enterprise Apps
-AuditLogs
-| where OperationName in (
-    "Add service principal credentials", 
-    "Update application – Certificates and secrets management"
-)
-| extend TargetAppId = tostring(TargetResources[0].attributes.[0].value)
-| extend TargetDisplayName = tostring(TargetResources[0].displayName)
-| extend InitiatingEntity = iff(isnotempty(InitiatedBy.user.userPrincipalName), 
-                                InitiatedBy.user.userPrincipalName, 
-                                InitiatedBy.app.displayName)
-| project TimeGenerated, OperationName, InitiatingEntity, TargetDisplayName, TargetAppId, Result
-| order by TimeGenerated desc
-                            </pre>
-                        </div>
+                        </li>
+                        <li class="bg-cyber-bg p-2.5 rounded-lg border border-cyber-border flex items-start gap-2.5">
+                            <i data-lucide="alert-triangle" class="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0"></i>
+                            <div>
+                                <strong class="text-white block text-xs font-mono">Suspicious service principal sign-in from unfamiliar location</strong>
+                                <span class="text-[11px] text-slate-400">Identifies automated client credential token requests from threat actor C2 and Tor exit nodes.</span>
+                            </div>
+                        </li>
+                        <li class="bg-cyber-bg p-2.5 rounded-lg border border-cyber-border flex items-start gap-2.5">
+                            <i data-lucide="alert-triangle" class="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0"></i>
+                            <div>
+                                <strong class="text-white block text-xs font-mono">New credentials added to application registration</strong>
+                                <span class="text-[11px] text-slate-400">Flags rogue client secrets or RSA certificate keypairs appended to establish persistent backdoors.</span>
+                            </div>
+                        </li>
+                    </ul>
 
-                        <!-- Architectural Callout Box -->
-                        <div class="bg-cyan-950/20 border border-cyan-500/30 p-3.5 rounded-lg text-xs text-cyan-200 space-y-1">
-                            <strong class="font-bold text-cyan-400 font-mono block">// TECHNICAL SCHEMA NOTE: AppId vs ServicePrincipalId</strong>
-                            <p class="text-[11px] text-slate-300 leading-relaxed">
-                                Always query multi-tenant application compromises using static multi-tenant <strong class="text-white">AppId</strong> strings rather than local <strong class="text-white">ServicePrincipalId</strong> Object IDs. While <code class="text-cyan-300">AppId</code> remains static across all tenants globally, <code class="text-cyan-300">ServicePrincipalId</code> represents the local instance assigned uniquely per customer tenant.
-                            </p>
-                        </div>
-
-                        <!-- OFFICIAL DEFENDER XDR ALERTS -->
-                        <div class="bg-red-950/20 border border-red-500/30 p-3.5 rounded-lg text-xs space-y-2">
-                            <strong class="font-bold text-red-400 font-mono block flex items-center gap-2">
-                                <i data-lucide="shield-alert" class="w-4 h-4"></i> OFFICIAL DEFENDER XDR ALERTS
-                            </strong>
-                            <ul class="list-disc pl-4 text-slate-300 space-y-1 font-mono text-[11px]">
-                                <li>Application self-assigned Global Administrator role</li>
-                                <li>Unusual Microsoft Graph activity associated with Compromised ConnectWise Application</li>
-                            </ul>
-                        </div>
+                    <!-- App ID Reference Note -->
+                    <div class="bg-cyan-950/20 border border-cyan-500/30 p-3.5 rounded-lg text-xs text-cyan-200 space-y-1">
+                        <strong class="font-bold text-cyan-400 font-mono block">// APP ID INVENTORY DIRECTIVE</strong>
+                        <p class="text-[11px] text-slate-300 leading-relaxed">
+                            Microsoft has identified <strong>four specific ConnectWise multi-tenant application IDs</strong> involved in this supply chain compromise. Refer to the official Microsoft advisory for the exact App ID strings to scope local tenant service principal instances.
+                        </p>
                     </div>
                 </div>
 
-                <!-- Remediation & Incident Response Checklist -->
+                <!-- Incident Response Guidance & Directives -->
                 <div class="bg-cyber-card border border-cyber-border rounded-xl p-6 space-y-4">
                     <div class="flex items-center justify-between border-b border-cyber-border pb-3">
                         <h3 class="text-base font-bold text-white flex items-center gap-2">
-                            <i data-lucide="check-square" class="w-5 h-5 text-emerald-400"></i> Incident Response Guidance
+                            <i data-lucide="check-square" class="w-5 h-5 text-emerald-400"></i> Mandatory Response Directives
                         </h3>
                         <span class="text-xs font-mono text-emerald-400">Actionable Remediation</span>
                     </div>
@@ -404,8 +377,8 @@ AuditLogs
                         <label class="flex items-start gap-3 p-3 bg-cyber-bg border border-cyber-border rounded-lg cursor-pointer hover:border-emerald-500/50 transition">
                             <input type="checkbox" class="mt-1 rounded bg-cyber-card border-cyber-border text-emerald-500 focus:ring-0">
                             <div>
-                                <strong class="text-white block font-mono">1. Disable, Do Not Delete</strong>
-                                <p class="text-slate-400 mt-0.5">Do not delete enterprise applications as the first response to preserve critical audit logs and configuration evidence. Disable the application instead to halt ongoing token validation.</p>
+                                <strong class="text-white block font-mono">1. Disable, Do Not Delete (Evidence Preservation)</strong>
+                                <p class="text-slate-400 mt-0.5">Do not delete enterprise applications as a first response. Deleting applications destroys critical audit logs and forensic evidence. Disable them instead.</p>
                             </div>
                         </label>
 
@@ -413,33 +386,24 @@ AuditLogs
                             <input type="checkbox" class="mt-1 rounded bg-cyber-card border-cyber-border text-emerald-500 focus:ring-0">
                             <div>
                                 <strong class="text-white block font-mono">2. Inventory the Four ConnectWise App IDs</strong>
-                                <p class="text-slate-400 mt-0.5">Inventory the exact four global Application IDs identified by Microsoft in the advisory and map them to their corresponding local tenant ServicePrincipal Object IDs.</p>
+                                <p class="text-slate-400 mt-0.5">Cross-reference all active service principal instances in your tenant against the four published Microsoft advisory application IDs.</p>
                             </div>
                         </label>
 
                         <label class="flex items-start gap-3 p-3 bg-cyber-bg border border-cyber-border rounded-lg cursor-pointer hover:border-emerald-500/50 transition">
                             <input type="checkbox" class="mt-1 rounded bg-cyber-card border-cyber-border text-emerald-500 focus:ring-0">
                             <div>
-                                <strong class="text-white block font-mono">3. Revoke Global Admin & Directory Role Assignments</strong>
-                                <p class="text-slate-400 mt-0.5">Audit recent Directory Role assignment logs (`Add member to role`) for newly elevated application principals or user accounts within the attack window.</p>
+                                <strong class="text-white block font-mono">3. Enforce Vendor Restoration Holds</strong>
+                                <p class="text-slate-400 mt-0.5">Keep affected ConnectWise application connections disabled until official restoration instructions and vendor security clearances are issued.</p>
                             </div>
                         </label>
+                    </div>
 
-                        <label class="flex items-start gap-3 p-3 bg-cyber-bg border border-cyber-border rounded-lg cursor-pointer hover:border-emerald-500/50 transition">
-                            <input type="checkbox" class="mt-1 rounded bg-cyber-card border-cyber-border text-emerald-500 focus:ring-0">
-                            <div>
-                                <strong class="text-white block font-mono">4. Purge Unrecognized OAuth App Credentials</strong>
-                                <p class="text-slate-400 mt-0.5">Examine all active app registrations for newly appended secondary secrets or certificates generated during the compromise timeframe.</p>
-                            </div>
-                        </label>
-
-                        <label class="flex items-start gap-3 p-3 bg-cyber-bg border border-cyber-border rounded-lg cursor-pointer hover:border-emerald-500/50 transition">
-                            <input type="checkbox" class="mt-1 rounded bg-cyber-card border-cyber-border text-emerald-500 focus:ring-0">
-                            <div>
-                                <strong class="text-white block font-mono">5. Vendor Restoration Hold</strong>
-                                <p class="text-slate-400 mt-0.5">Keep affected ConnectWise application connections disabled within the tenant until formal, secure restoration instructions are provided directly by ConnectWise.</p>
-                            </div>
-                        </label>
+                    <!-- Embossed Microsoft Advisory Button -->
+                    <div class="pt-2">
+                        <a href="https://www.microsoft.com/en-us/security/blog/2026/10/21/storm-0940-uses-artex-agentic-ai-connectwise-supply-chain-compromise/" target="_blank" rel="noopener noreferrer" class="w-full py-3 px-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-mono text-xs font-bold rounded-xl shadow-lg border border-cyan-400/40 flex items-center justify-center gap-2 transition transform active:scale-95">
+                            <i data-lucide="external-link" class="w-4 h-4"></i> Read Official Microsoft Threat Advisory
+                        </a>
                     </div>
                 </div>
             </div>
@@ -457,9 +421,9 @@ AuditLogs
         // Initialize Lucide Icons
         lucide.createIcons();
 
-        // Global Navigation
+        // Global Navigation (4 Tabs)
         function switchTab(tabId) {
-            ['dashboard', 'simulation', 'storyboard', 'defender'].forEach(id => {
+            ['dashboard', 'simulation', 'storyboard', 'hunting'].forEach(id => {
                 const view = document.getElementById(`view-${id}`);
                 const tab = document.getElementById(`tab-${id}`);
                 if (id === tabId) {
@@ -474,8 +438,7 @@ AuditLogs
             });
 
             if (tabId === 'simulation') {
-                // Use a slight timeout to ensure container is fully visible before calc
-                setTimeout(initCanvas, 50);
+                initCanvas();
             }
         }
 
@@ -594,19 +557,14 @@ AuditLogs
         let simStep = 0;
         let packets = [];
         let nodes = [];
-        let animationFrameId;
 
         function initCanvas() {
             canvas = document.getElementById('attackCanvas');
             if (!canvas) return;
             
-            const container = document.getElementById('canvas-container');
-            const rect = container.getBoundingClientRect();
-            
-            // Fix dimension setting to avoid continuous expansion on resize
-            canvas.width = rect.width - 16;
-            canvas.height = rect.height - 16;
-            
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth - 16;
+            canvas.height = Math.max(container.clientHeight - 16, 420);
             ctx = canvas.getContext('2d');
 
             setupNodes();
@@ -618,13 +576,9 @@ AuditLogs
             const h = canvas.height;
 
             nodes = [
-                // 0: Threat Actor
                 { id: 'actor', label: 'Storm-0940 C2', x: w * 0.12, y: h * 0.25, color: '#ff0055', radius: 20, type: 'actor' },
-                // 1: ARTEX AI Mesh
                 { id: 'artex', label: 'ARTEX AI Mesh', x: w * 0.35, y: h * 0.25, color: '#a855f7', radius: 24, type: 'ai' },
-                // 2: ConnectWise SaaS
                 { id: 'connectwise', label: 'ConnectWise SaaS', x: w * 0.35, y: h * 0.70, color: '#ffb700', radius: 22, type: 'vendor' },
-                // Target M365 Tenants
                 { id: 'tenant1', label: 'Defense M365', x: w * 0.80, y: h * 0.18, color: '#00f0ff', radius: 18, type: 'target' },
                 { id: 'tenant2', label: 'Aerospace M365', x: w * 0.84, y: h * 0.40, color: '#00f0ff', radius: 18, type: 'target' },
                 { id: 'tenant3', label: 'Energy Grid M365', x: w * 0.82, y: h * 0.62, color: '#00f0ff', radius: 18, type: 'target' },
@@ -644,7 +598,6 @@ AuditLogs
             } else {
                 btnLabel.innerText = "Play Simulation";
                 btnIcon.setAttribute('data-lucide', 'play');
-                if(animationFrameId) cancelAnimationFrame(animationFrameId);
             }
             lucide.createIcons();
         }
@@ -665,14 +618,11 @@ AuditLogs
             isSimRunning = false;
             simStep = 0;
             packets = [];
-            if(animationFrameId) cancelAnimationFrame(animationFrameId);
-            
             document.getElementById('label-sim-play').innerText = "Play Simulation";
             document.getElementById('icon-sim-play').setAttribute('data-lucide', 'play');
             document.getElementById('sim-terminal').innerHTML = '<div class="text-slate-500">// Terminal reset. Awaiting start...</div>';
             document.getElementById('sim-phase-title').innerText = "Phase 1: Initial Recon & High-Volume Spray";
             lucide.createIcons();
-            
             if (ctx) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 drawCanvas();
@@ -715,7 +665,6 @@ AuditLogs
 
             simStep += 1 * simSpeed;
 
-            // Trigger events based on simulation timeline steps
             logMessages.forEach(item => {
                 if (Math.floor(simStep) === item.step) {
                     logTerminal(item.msg);
@@ -723,12 +672,11 @@ AuditLogs
                 }
             });
 
-            // Periodically spawn visual packets between graph nodes
             if (simStep < 60 && Math.random() < 0.3) {
-                spawnPacket(0, 1, '#ff0055', 0.02); // Storm -> ARTEX
-                spawnPacket(1, 3, '#a855f7', 0.025); // ARTEX -> Targets
+                spawnPacket(0, 1, '#ff0055', 0.02);
+                spawnPacket(1, 3, '#a855f7', 0.025);
             } else if (simStep >= 60 && simStep < 120 && Math.random() < 0.4) {
-                spawnPacket(1, 2, '#ffb700', 0.03); // ARTEX -> ConnectWise
+                spawnPacket(1, 2, '#ffb700', 0.03);
                 spawnPacket(2, 3, '#ffb700', 0.02);
                 spawnPacket(2, 4, '#ffb700', 0.02);
             } else if (simStep >= 120 && Math.random() < 0.5) {
@@ -739,19 +687,18 @@ AuditLogs
             drawCanvas();
 
             if (simStep > 320) {
-                simStep = 0; // Loop simulation
-                packets = []; // CLEAR PREVIOUS PACKETS TO PREVENT MEMORY AND VISUAL CLUTTER
+                simStep = 0;
+                packets = [];
                 logTerminal("<span class='text-cyan-400'>// Simulation sequence loop restarting...</span>");
             }
 
-            animationFrameId = requestAnimationFrame(animateSim);
+            requestAnimationFrame(animateSim);
         }
 
         function drawCanvas() {
             if (!ctx || !canvas) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 1. Draw Connection Lines
             const connections = [
                 [0, 1], [1, 2], [1, 3], [1, 4], [1, 5], [1, 6], [2, 3], [2, 4], [2, 5], [2, 6]
             ];
@@ -769,7 +716,6 @@ AuditLogs
                 ctx.setLineDash([]);
             });
 
-            // 2. Update & Draw Packets
             for (let i = packets.length - 1; i >= 0; i--) {
                 const p = packets[i];
                 p.progress += p.speed;
@@ -790,15 +736,12 @@ AuditLogs
                 ctx.shadowBlur = 0;
             }
 
-            // 3. Draw Nodes
             nodes.forEach(node => {
-                // Pulse effect
                 ctx.beginPath();
                 ctx.arc(node.x, node.y, node.radius + Math.sin(Date.now() / 300) * 2, 0, Math.PI * 2);
                 ctx.fillStyle = node.color + '20';
                 ctx.fill();
 
-                // Core Node
                 ctx.beginPath();
                 ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
                 ctx.fillStyle = '#111622';
@@ -810,7 +753,6 @@ AuditLogs
                 ctx.stroke();
                 ctx.shadowBlur = 0;
 
-                // Node Labels
                 ctx.fillStyle = '#e2e8f0';
                 ctx.font = '11px "JetBrains Mono", monospace';
                 ctx.textAlign = 'center';
@@ -818,24 +760,9 @@ AuditLogs
             });
         }
 
-        // Copy Utility
-        function copyToClipboard(elementId) {
-            const text = document.getElementById(elementId).innerText;
-            const textarea = document.createElement('textarea');
-            textarea.value = text;
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
-            alert('Query copied to clipboard!');
-        }
-
-        // Window Resize Listener
         window.addEventListener('resize', () => {
             if (document.getElementById('view-simulation').classList.contains('hidden') === false) {
-                // Add debounce to resize to prevent rapid firing
-                clearTimeout(window.resizeTimer);
-                window.resizeTimer = setTimeout(initCanvas, 100);
+                initCanvas();
             }
         });
     </script>
